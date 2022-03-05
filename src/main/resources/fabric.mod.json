@@ -1,38 +1,41 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
+  "id": "pmpp",
   "version": "${version}",
 
-  "name": "Example Mod",
-  "description": "This is an example description! Tell everyone what your mod is about!",
+  "name": "PMPP",
+  "description": "Piston Message and Presence Protocol (blame kat)",
   "authors": [
-    "Me!"
+    "LemmaEOF"
   ],
   "contact": {
-    "homepage": "https://quiltmc.org/",
-    "sources": "https://github.com/Oliver-makes-code/quilt-example-mod"
+    "homepage": "https://lemmaeof.gay",
+    "sources": "https://github.com/LemmaEOF/pmpp"
   },
 
-  "license": "CC0-1.0",
-  "icon": "assets/modid/icon.png",
+  "license": "FAFOL-0.2",
+  "icon": "assets/pmpp/icon.png",
 
   "environment": "*",
   "entrypoints": {
     "main": [
-      "org.quiltmc.example.ExampleMod"
+      "gay.lemmaeof.pmpp.PMPP"
+    ],
+    "cardinal-components-level": [
+      "gay.lemmaeof.pmpp.init.PMPPComponents"
     ]
   },
   "mixins": [
-    "modid.mixins.json"
+    "pmpp.mixins.json"
   ],
-
+  "custom": {
+    "cardinal-components": [
+      "pmpp:inboxes"
+    ]
+  },
   "depends": {
     "fabricloader": ">=0.11.3",
-    "fabric": "*",
     "minecraft": "1.18.x",
     "java": ">=17"
-  },
-  "suggests": {
-    "another-mod": "*"
   }
 }
