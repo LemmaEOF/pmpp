@@ -44,8 +44,13 @@ dependencies {
 
 	modImplementation "org.quiltmc.qsl:qsl:${project.qsl_version}+${project.minecraft_version}-SNAPSHOT"
 	//fapi-qsl networking so cca can work
-	modImplementation include("org.quiltmc.fabric_api_qsl:fabric-api-base:1.0.0+${project.minecraft_version}-SNAPSHOT")
+	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-api-base:1.0.0+${project.minecraft_version}-SNAPSHOT")
 	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-networking-api-v1:2.0.0+${project.minecraft_version}-SNAPSHOT")
+
+	include "org.quiltmc.qsl:block:1.0.0:${project.minecraft_version}-SNAPSHOT"
+	include "org.quiltmc.qsl:core:1.0.0:${project.minecraft_version}-SNAPSHOT"
+	include "org.quiltmc.qsl:gui:1.0.0:${project.minecraft_version}-SNAPSHOT"
+	include "org.quiltmc.qsl:item:1.0.0:${project.minecraft_version}-SNAPSHOT"
 
 	//having both fapi networking and qsl networking causes a redirect war
 	modImplementation("dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cardinal_version}") {
