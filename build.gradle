@@ -42,15 +42,24 @@ dependencies {
 //	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-//	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	modImplementation "org.quiltmc.qsl:qsl:${project.qsl_version}+${project.minecraft_version}-SNAPSHOT"
-//	modImplementation "org.quiltmc.fabric_api_qsl:fabric-api:${project.fabric_version}+${project.minecraft_version}-SNAPSHOT"
+	//fapi-qsl networking so cca can work
+	modImplementation include("org.quiltmc.fabric_api_qsl:fabric-api-base:1.0.0+${project.minecraft_version}-SNAPSHOT")
+	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-networking-api-v1:2.0.0+${project.minecraft_version}-SNAPSHOT")
 
-	modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cardinal_version}"
-	modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-level:${project.cardinal_version}"
-	include "dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cardinal_version}"
-	include "dev.onyxstudios.cardinal-components-api:cardinal-components-level:${project.cardinal_version}"
+	//having both fapi networking and qsl networking causes a redirect war
+	modImplementation("dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cardinal_version}") {
+		exclude group: "net.fabricmc.fabric-api"
+	}
+	modImplementation("dev.onyxstudios.cardinal-components-api:cardinal-components-level:${project.cardinal_version}") {
+		exclude group: "net.fabricmc.fabric-api"
+	}
+	include("dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cardinal_version}") {
+		exclude group: "net.fabricmc.fabric-api"
+	}
+	include("dev.onyxstudios.cardinal-components-api:cardinal-components-level:${project.cardinal_version}") {
+		exclude group: "net.fabricmc.fabric-api"
+	}
 }
 
 processResources {

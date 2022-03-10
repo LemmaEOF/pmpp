@@ -1,7 +1,6 @@
 package gay.lemmaeof.pmpp.impl;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,8 +17,6 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.LiteralText;
 import net.minecraft.text.Text;
 import net.minecraft.world.WorldProperties;
-
-import net.fabricmc.fabric.api.util.NbtType;
 
 public class LevelInboxComponent implements InboxesComponent {
 	private final WorldProperties level;
@@ -62,6 +59,11 @@ public class LevelInboxComponent implements InboxesComponent {
 		getInbox(playerId).add(message);
 	}
 
+
+	public void setServer(MinecraftServer server) {
+		this.server = server;
+	}
+
 	@Override
 	public void readFromNbt(NbtCompound tag) {
 		cachedNames.clear();
@@ -75,7 +77,7 @@ public class LevelInboxComponent implements InboxesComponent {
 		}
 
 		for (String key : inboxesTag.getKeys()) {
-			NbtList inboxTag = inboxesTag.getList(key, NbtType.COMPOUND);
+			NbtList inboxTag = inboxesTag.getList(key, NbtElement.COMPOUND_TYPE);
 			List<Message> messages = new ArrayList<>();
 			for (NbtElement e : inboxTag) {
 				messages.add(Message.fromNbt((NbtCompound) e));
@@ -105,8 +107,4 @@ public class LevelInboxComponent implements InboxesComponent {
 		tag.put("Inboxes", inboxesTag);
 	}
 
-	@Override
-	public void setServer(MinecraftServer server) {
-		this.server = server;
-	}
 }

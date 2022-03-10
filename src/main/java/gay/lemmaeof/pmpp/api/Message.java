@@ -12,10 +12,10 @@ import gay.lemmaeof.pmpp.PMPP;
 
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
-import net.fabricmc.fabric.api.util.NbtType;
 
 public class Message {
 	private final Text message;
@@ -85,7 +85,7 @@ public class Message {
 		UUID author = tag.getUuid("Author");
 		try {
 			Date timestamp = FORMAT.parse(tag.getString("Timestamp"));
-			if (tag.contains("Attachment", NbtType.COMPOUND)) {
+			if (tag.contains("Attachment", NbtElement.COMPOUND_TYPE)) {
 				NbtCompound attTag = tag.getCompound("Attachment");
 				Identifier type = new Identifier(attTag.getString("type"));
 				Attachment.Serializer<?> serializer = PMPP.ATTACHMENT_SERIALIZER.get(type);

@@ -2,7 +2,6 @@ package gay.lemmaeof.pmpp.api;
 
 import dev.onyxstudios.cca.api.v3.component.sync.AutoSyncedComponent;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 
 import java.util.List;
@@ -21,5 +20,4 @@ public interface InboxesComponent extends AutoSyncedComponent {
 		sendMessage(player.getUuid(), message);
 	}
 	void sendMessage(UUID playerId, Message message);
-	void setServer(MinecraftServer server);
 }

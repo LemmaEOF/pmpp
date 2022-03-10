@@ -1,5 +1,6 @@
 package gay.lemmaeof.pmpp.mixin;
 
+import gay.lemmaeof.pmpp.impl.LevelInboxComponent;
 import gay.lemmaeof.pmpp.init.PMPPComponents;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,6 +16,6 @@ import net.minecraft.world.level.ServerWorldProperties;
 public class MixinMinecraftServer {
 	@Inject(method = "createWorlds", at = @At("TAIL"), locals = LocalCapture.CAPTURE_FAILEXCEPTION)
 	private void giveServer(WorldGenerationProgressListener listener, CallbackInfo info, ServerWorldProperties properties) {
-		PMPPComponents.INBOXES.get(properties).setServer((MinecraftServer) (Object)this);
+		((LevelInboxComponent) PMPPComponents.INBOXES.get(properties)).setServer((MinecraftServer) (Object)this);
 	}
 }
