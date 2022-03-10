@@ -32,6 +32,11 @@ public class LevelInboxComponent implements InboxesComponent {
 	}
 
 	@Override
+	public List<UUID> getKnownPlayers() {
+		return cachedNames.keySet().stream().toList();
+	}
+
+	@Override
 	public void updateName(UUID playerId, Text name) {
 		cachedNames.put(playerId, name);
 	}

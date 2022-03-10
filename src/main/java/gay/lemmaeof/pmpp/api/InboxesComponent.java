@@ -1,18 +1,18 @@
 package gay.lemmaeof.pmpp.api;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
-
 import dev.onyxstudios.cca.api.v3.component.sync.AutoSyncedComponent;
-
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.Text;
 
+import java.util.List;
+import java.util.UUID;
+
 public interface InboxesComponent extends AutoSyncedComponent {
+	List<UUID> getKnownPlayers();
 	void updateName(UUID playerId, Text name);
 	Text getName(UUID playerId);
+	//TODO: email-style or text-style? currently set up as email-style
 	default List<Message> getInbox(PlayerEntity player) {
 		return getInbox(player.getUuid());
 	}

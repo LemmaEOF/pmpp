@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.UUID;
 
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -16,6 +15,8 @@ import gay.lemmaeof.pmpp.api.InboxesComponent;
 import gay.lemmaeof.pmpp.api.Message;
 import gay.lemmaeof.pmpp.impl.ItemStackAttachment;
 import gay.lemmaeof.pmpp.init.PMPPComponents;
+import net.minecraft.command.argument.ItemStackArgument;
+import org.quiltmc.qsl.command.api.CommandRegistrationCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,7 +54,7 @@ public class PMPP implements ModInitializer {
 
 		Registry.register(ATTACHMENT_SERIALIZER, new Identifier(MODID, "item_stack"), STACK_ATTACHMENT);
 
-		CommandRegistrationCallback.EVENT.register(((dispatcher, dedicated) -> {
+		CommandRegistrationCallback.EVENT.register(((dispatcher, integrated, dedicated) -> {
 			dispatcher.register(CommandManager.literal("pmpp")
 					.then(CommandManager.literal("get")
 							.executes(context -> {
@@ -79,9 +80,9 @@ public class PMPP implements ModInitializer {
 							.then(CommandManager.argument("player", EntityArgumentType.player())
 									.then(CommandManager.argument("attachment", ItemStackArgumentType.itemStack())
 											.then(CommandManager.argument("message", StringArgumentType.greedyString())
-													.executes(PMPP::sendMessage)))
+													.executes(ctx -> PMPP.sendMessage(ctx, true))))
 									.then(CommandManager.argument("message", StringArgumentType.greedyString())
-											.executes(PMPP::sendMessage)
+											.executes(ctx -> PMPP.sendMessage(ctx, false))
 									)
 							)
 					)
@@ -89,7 +90,7 @@ public class PMPP implements ModInitializer {
 		}));
 	}
 
-	private static int sendMessage(CommandContext<ServerCommandSource> context) {
+	private static int sendMessage(CommandContext<ServerCommandSource> context, boolean hasAttachment) {
 		try {
 			WorldProperties properties = context.getSource().getWorld().getLevelProperties();
 			InboxesComponent inboxes = PMPPComponents.INBOXES.get(properties);
@@ -97,20 +98,19 @@ public class PMPP implements ModInitializer {
 			UUID author = context.getSource().getPlayer().getUuid();
 			String message = context.getArgument("message", String.class);
 			Date timestamp = new Date();
-			//this is hacky but will work for now I guess
-			try {
+			if (hasAttachment) {
 				LOGGER.info("Checking for attachment!");
-				ItemStack stack = context.getArgument("attachment", ItemStack.class);
+				ItemStackArgument arg = ItemStackArgumentType.getItemStackArgument(context, "attachment");
+				ItemStack stack = arg.createStack(1, false);
 				ItemStackAttachment attachment = new ItemStackAttachment(stack);
 				Message m = new Message(new LiteralText(message), author, timestamp, attachment);
 				inboxes.sendMessage(player, m);
-				return 1;
-			} catch (IllegalArgumentException e) {
+			} else {
 				LOGGER.info("Attachment not found!");
 				Message m = new Message(new LiteralText(message), author, timestamp, null);
 				inboxes.sendMessage(player, m);
-				return 1;
 			}
+			return 1;
 		} catch (CommandSyntaxException e) {
 			context.getSource().sendError(new LiteralText("Only players may send mail!"));
 			return -1;
