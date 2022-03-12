@@ -1,5 +1,6 @@
 package gay.lemmaeof.pmpp.impl;
 
+import gay.lemmaeof.pmpp.PMPP;
 import gay.lemmaeof.pmpp.api.Attachment;
 
 import net.minecraft.item.ItemStack;
@@ -18,18 +19,18 @@ public class ItemStackAttachment implements Attachment {
 	}
 
 	@Override
-	public <T extends Attachment> Attachment.Serializer<T> getSerializer() {
-		return null;
+	public void writeNbt(NbtCompound tag) {
+		NbtCompound stackTag = new NbtCompound();
+		stack.writeNbt(stackTag);
+		tag.put("Stack", stackTag);
 	}
 
-	public static final class Serializer implements Attachment.Serializer<ItemStackAttachment> {
+	@Override
+	public Attachment.AttachmentType<?> getType() {
+		return PMPP.STACK_ATTACHMENT;
+	}
 
-		@Override
-		public void toNbt(ItemStackAttachment attachment, NbtCompound nbt) {
-			NbtCompound stackTag = new NbtCompound();
-			attachment.stack.writeNbt(stackTag);
-			nbt.put("Stach", stackTag);
-		}
+	public static final class AttachmentType implements Attachment.AttachmentType<ItemStackAttachment> {
 
 		@Override
 		public ItemStackAttachment fromNbt(NbtCompound nbt) {

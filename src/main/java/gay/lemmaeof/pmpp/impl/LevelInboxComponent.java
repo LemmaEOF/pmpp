@@ -8,20 +8,29 @@ import java.util.UUID;
 
 import gay.lemmaeof.pmpp.api.Message;
 import gay.lemmaeof.pmpp.api.InboxesComponent;
+import gay.lemmaeof.pmpp.api.MessageThread;
+import gay.lemmaeof.pmpp.client.screen.ItemTerminalScreen;
+import gay.lemmaeof.pmpp.init.PMPPComponents;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.text.LiteralText;
+import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.world.WorldProperties;
 
 public class LevelInboxComponent implements InboxesComponent {
+	//TODO: DELETE ME AND ASSOCIATED LOGIC BEFORE PUBLIC RELEASE! I EXIST PURELY TO DESTROY!
+	private static final int DEV_HASH = 2;
 	private final WorldProperties level;
-	private final Map<UUID, Text> cachedNames = new HashMap<>();
-	private final Map<UUID, List<Message>> inboxes = new HashMap<>();
+	private final Map<UUID, MutableText> cachedNames = new HashMap<>();
+	private final List<MessageThread> allThreads = new ArrayList<>();
+	private final Map<UUID, List<MessageThread>> inboxes = new HashMap<>();
 	private MinecraftServer server;
 
 	public LevelInboxComponent(WorldProperties level) {
@@ -34,15 +43,15 @@ public class LevelInboxComponent implements InboxesComponent {
 	}
 
 	@Override
-	public void updateName(UUID playerId, Text name) {
+	public void updateName(UUID playerId, MutableText name) {
 		cachedNames.put(playerId, name);
 	}
 
 	@Override
-	public Text getName(UUID playerId) {
+	public MutableText getName(UUID playerId) {
 		PlayerEntity player = server.getPlayerManager().getPlayer(playerId);
 		if (player != null) {
-			Text name = player.getDisplayName();
+			MutableText name = player.getDisplayName().copy();
 			updateName(playerId, name);
 			return name;
 		}
@@ -50,61 +59,94 @@ public class LevelInboxComponent implements InboxesComponent {
 	}
 
 	@Override
-	public List<Message> getInbox(UUID playerId) {
+	public List<MessageThread> getInbox(UUID playerId) {
 		return inboxes.computeIfAbsent(playerId, (id) -> new ArrayList<>());
 	}
 
 	@Override
-	public void sendMessage(UUID playerId, Message message) {
-		getInbox(playerId).add(message);
+	public MessageThread createThread(String name, UUID... members) {
+		int threadId = allThreads.size();
+		MessageThread thread = new MessageThread(threadId, name, members);
+		allThreads.add(thread);
+		for (UUID id : members) {
+			getInbox(id).add(thread);
+		}
+		thread.listen(this::markDirty);
+		return thread;
 	}
-
 
 	public void setServer(MinecraftServer server) {
 		this.server = server;
 	}
 
+	private void markDirty(int threadId, boolean participantsChanged) {
+		if (participantsChanged) {
+			MessageThread thread = allThreads.get(threadId);
+			for (UUID id : inboxes.keySet()) {
+				List<MessageThread> inbox = inboxes.get(id);
+				boolean playerHasThread = inbox.contains(thread);
+				boolean threadHasPlayer = thread.getMembers().contains(id);
+				if (threadHasPlayer && !playerHasThread) {
+					inbox.add(thread);
+				}
+				if (!threadHasPlayer && playerHasThread) {
+					inbox.remove(thread);
+				}
+			}
+		}
+		PMPPComponents.INBOXES.sync(this.level);
+	}
+
 	@Override
 	public void readFromNbt(NbtCompound tag) {
 		cachedNames.clear();
+		allThreads.clear();
 		inboxes.clear();
 
-		NbtCompound namesTag = tag.getCompound("CachedNames");
-		NbtCompound inboxesTag = tag.getCompound("Inboxes");
+		int hash = tag.getInt("DevHash");
 
-		for (String key : namesTag.getKeys()) {
-			cachedNames.put(UUID.fromString(key), Text.Serializer.fromJson(namesTag.getString(key)));
-		}
+		if (hash == DEV_HASH) {
+			NbtCompound namesTag = tag.getCompound("CachedNames");
+			NbtList threadsTag = tag.getList("Threads", NbtElement.COMPOUND_TYPE);
 
-		for (String key : inboxesTag.getKeys()) {
-			NbtList inboxTag = inboxesTag.getList(key, NbtElement.COMPOUND_TYPE);
-			List<Message> messages = new ArrayList<>();
-			for (NbtElement e : inboxTag) {
-				messages.add(Message.fromNbt((NbtCompound) e));
+			for (String key : namesTag.getKeys()) {
+				cachedNames.put(UUID.fromString(key), Text.Serializer.fromJson(namesTag.getString(key)));
 			}
-			inboxes.put(UUID.fromString(key), messages);
+			for (NbtElement e : threadsTag) {
+				NbtCompound threadTag = (NbtCompound) e;
+				MessageThread thread = MessageThread.fromNbt(threadTag);
+				allThreads.add(thread);
+				for (UUID id : thread.getMembers()) {
+					getInbox(id).add(thread);
+				}
+				thread.listen(this::markDirty);
+			}
 		}
 	}
 
 	@Override
 	public void writeToNbt(NbtCompound tag) {
+		tag.putInt("DevHash", DEV_HASH);
+
 		NbtCompound namesTag = new NbtCompound();
-		NbtCompound inboxesTag = new NbtCompound();
+		NbtList threadsTag = new NbtList();
 
 		for (UUID id : cachedNames.keySet()) {
 			namesTag.putString(id.toString(), Text.Serializer.toJson(cachedNames.get(id)));
 		}
-		for (UUID id : inboxes.keySet()) {
-			List<Message> inbox = inboxes.get(id);
-			NbtList inboxTag = new NbtList();
-			for (Message m : inbox) {
-				inboxTag.add(m.toNbt());
-			}
-			inboxesTag.put(id.toString(), inboxTag);
+		for (MessageThread thread : allThreads) {
+			threadsTag.add(thread.toNbt());
 		}
 
 		tag.put("CachedNames", namesTag);
-		tag.put("Inboxes", inboxesTag);
+		tag.put("Threads", threadsTag);
 	}
 
+	@Override
+	public void applySyncPacket(PacketByteBuf buf) {
+		InboxesComponent.super.applySyncPacket(buf);
+		if (MinecraftClient.getInstance().currentScreen instanceof ItemTerminalScreen s) {
+			s.updateThread();
+		}
+	}
 }

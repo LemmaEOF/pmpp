@@ -1,8 +1,6 @@
 package gay.lemmaeof.pmpp.api;
 
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
@@ -16,14 +14,14 @@ import net.minecraft.nbt.NbtElement;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 
-
 public class Message {
 	private final Text message;
 	private final UUID author;
 	private final Date timestamp;
 	@Nullable private Attachment attachment;
 
-	private static final SimpleDateFormat FORMAT = new SimpleDateFormat("dd-MM-yyyyy hh:mm:ss");
+	//TODO: config!
+	private static final SimpleDateFormat FORMAT = new SimpleDateFormat("d/M/yyyy, h:m a");
 
 	public Message(Text message, UUID author, Date timestamp, @Nullable Attachment attachment) {
 		this.message = message;
@@ -70,11 +68,11 @@ public class Message {
 		NbtCompound tag = new NbtCompound();
 		tag.putString("Message", Text.Serializer.toJson(this.message));
 		tag.putUuid("Author", this.author);
-		tag.putString("Timestamp", FORMAT.format(this.timestamp));
+		tag.putLong("Timestamp", this.timestamp.getTime());
 		if (attachment != null) {
 			NbtCompound attTag = new NbtCompound();
-			attachment.getSerializer().toNbt(attachment, attTag);
-			attTag.putString("type", PMPP.ATTACHMENT_SERIALIZER.getId(attachment.getSerializer()).toString());
+			attachment.writeNbt(attTag);
+			attTag.putString("type", PMPP.ATTACHMENT_TYPE.getId(attachment.getType()).toString());
 			tag.put("Attachment", attTag);
 		}
 		return tag;
@@ -83,18 +81,14 @@ public class Message {
 	public static Message fromNbt(NbtCompound tag) {
 		Text message = Text.Serializer.fromJson(tag.getString("Message"));
 		UUID author = tag.getUuid("Author");
-		try {
-			Date timestamp = FORMAT.parse(tag.getString("Timestamp"));
-			if (tag.contains("Attachment", NbtElement.COMPOUND_TYPE)) {
-				NbtCompound attTag = tag.getCompound("Attachment");
-				Identifier type = new Identifier(attTag.getString("type"));
-				Attachment.Serializer<?> serializer = PMPP.ATTACHMENT_SERIALIZER.get(type);
-				return new Message(message, author, timestamp, serializer.fromNbt(attTag));
-			} else {
-				return new Message(message, author, timestamp, null);
-			}
-		} catch (ParseException e) {
-			throw new IllegalArgumentException("Unparseable timestamp: ", e);
+		Date timestamp = new Date(tag.getLong("Timestamp"));
+		if (tag.contains("Attachment", NbtElement.COMPOUND_TYPE)) {
+			NbtCompound attTag = tag.getCompound("Attachment");
+			Identifier typeId = new Identifier(attTag.getString("type"));
+			Attachment.AttachmentType<?> type = PMPP.ATTACHMENT_TYPE.get(typeId);
+			return new Message(message, author, timestamp, type.fromNbt(attTag));
+		} else {
+			return new Message(message, author, timestamp, null);
 		}
 	}
 }

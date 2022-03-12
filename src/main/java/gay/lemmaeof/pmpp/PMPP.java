@@ -13,9 +13,12 @@ import com.mojang.serialization.Lifecycle;
 import gay.lemmaeof.pmpp.api.Attachment;
 import gay.lemmaeof.pmpp.api.InboxesComponent;
 import gay.lemmaeof.pmpp.api.Message;
+import gay.lemmaeof.pmpp.api.MessageThread;
 import gay.lemmaeof.pmpp.impl.ItemStackAttachment;
 import gay.lemmaeof.pmpp.init.PMPPComponents;
 import net.minecraft.command.argument.ItemStackArgument;
+
+import gay.lemmaeof.pmpp.item.TerminalItem;
 import org.quiltmc.qsl.command.api.CommandRegistrationCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +26,8 @@ import org.slf4j.LoggerFactory;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.command.argument.ItemStackArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
@@ -39,81 +44,57 @@ public class PMPP implements ModInitializer {
 	public static final String MODID = "pmpp";
 	public static final Logger LOGGER = LoggerFactory.getLogger(MODID);
 
-	public static final RegistryKey<Registry<Attachment.Serializer<?>>> ATTACHMENT_SERIALIZER_KEY = RegistryKey.ofRegistry(new Identifier(MODID, "attachment_serializers"));
-	public static final Registry<Attachment.Serializer<?>> ATTACHMENT_SERIALIZER = new SimpleRegistry<>(ATTACHMENT_SERIALIZER_KEY, Lifecycle.stable(), null);
+	public static final RegistryKey<Registry<Attachment.AttachmentType<?>>> ATTACHMENT_TYPE_KEY = RegistryKey.ofRegistry(new Identifier(MODID, "attachment_types"));
+	public static final Registry<Attachment.AttachmentType<?>> ATTACHMENT_TYPE = new SimpleRegistry<>(ATTACHMENT_TYPE_KEY, Lifecycle.stable(), null);
 
-	public static final ItemStackAttachment.Serializer STACK_ATTACHMENT = new ItemStackAttachment.Serializer();
+	public static final ItemStackAttachment.AttachmentType STACK_ATTACHMENT = new ItemStackAttachment.AttachmentType();
 
 	@Override
 	public void onInitialize() {
-		// This code runs as soon as Minecraft is in a mod-load-ready state.
-		// However, some things (like resources) may still be uninitialized.
-		// Proceed with mild caution.
 
 		LOGGER.info("Hello Quilt world!");
 
-		Registry.register(ATTACHMENT_SERIALIZER, new Identifier(MODID, "item_stack"), STACK_ATTACHMENT);
+		Registry.register(Registry.ITEM, new Identifier(MODID, "test_terminal"), new TerminalItem(new Item.Settings().group(ItemGroup.MISC).maxCount(1)));
 
+		Registry.register(ATTACHMENT_TYPE, new Identifier(MODID, "item_stack"), STACK_ATTACHMENT);
 		CommandRegistrationCallback.EVENT.register(((dispatcher, integrated, dedicated) -> {
-			dispatcher.register(CommandManager.literal("pmpp")
-					.then(CommandManager.literal("get")
-							.executes(context -> {
-								WorldProperties properties = context.getSource().getWorld().getLevelProperties();
-								ServerPlayerEntity player = context.getSource().getPlayer();
-								InboxesComponent inboxes = PMPPComponents.INBOXES.get(properties);
-								List<Message> inbox = inboxes.getInbox(player);
-								for (Message message : inbox) {
-									MutableText text = new LiteralText("Message from ")
-											.append(inboxes.getName(message.getAuthor()))
-											.append(new LiteralText(" at " + message.getTimestamp() + ":\n"))
-											.append(message.getMessage());
-									if (message.hasAttachment()) {
-										text = text.append(new LiteralText("\n Attachment: "))
-												.append(message.getAttachment().toHoverableText());
-									}
-									context.getSource().sendFeedback(text, false);
-								}
-								return 1;
-							})
-					)
-					.then(CommandManager.literal("send")
-							.then(CommandManager.argument("player", EntityArgumentType.player())
-									.then(CommandManager.argument("attachment", ItemStackArgumentType.itemStack())
-											.then(CommandManager.argument("message", StringArgumentType.greedyString())
-													.executes(ctx -> PMPP.sendMessage(ctx, true))))
-									.then(CommandManager.argument("message", StringArgumentType.greedyString())
-											.executes(ctx -> PMPP.sendMessage(ctx, false))
+			dispatcher.register(
+					CommandManager.literal("pmpp")
+							.then(CommandManager.literal("send")
+									.then(CommandManager.argument("contents", StringArgumentType.greedyString())
+											.executes(context -> {
+												String message = context.getArgument("contents", String.class);
+												try {
+													PlayerEntity player = context.getSource().getPlayer();
+													Message m = new Message(
+															new LiteralText(message),
+															player.getUuid(),
+															new Date(),
+															null
+													);
+													InboxesComponent INBOXES = PMPPComponents.INBOXES.get(player.getWorld().getLevelProperties());
+													List<MessageThread> threads = INBOXES.getInbox(player);
+													for (MessageThread thread : threads) {
+														if (thread.getMembers().size() == 1 && thread.getMembers().contains(player.getUuid())) {
+															thread.sendMessage(m);
+															context.getSource().sendFeedback(new LiteralText("Message sent!"), true);
+															return 1;
+														}
+													}
+													//did not find a thread, make a new one!
+													MessageThread thread = INBOXES.createThread("Self-message", player);
+													thread.sendMessage(m);
+													context.getSource().sendFeedback(new LiteralText("Message sent!"), true);
+													return 1;
+												} catch (CommandSyntaxException e) {
+													context.getSource().sendError(new LiteralText("Must run as player!"));
+													return -1;
+												}
+											})
 									)
 							)
-					)
 			);
 		}));
 	}
 
-	private static int sendMessage(CommandContext<ServerCommandSource> context, boolean hasAttachment) {
-		try {
-			WorldProperties properties = context.getSource().getWorld().getLevelProperties();
-			InboxesComponent inboxes = PMPPComponents.INBOXES.get(properties);
-			PlayerEntity player = EntityArgumentType.getPlayer(context, "player");
-			UUID author = context.getSource().getPlayer().getUuid();
-			String message = context.getArgument("message", String.class);
-			Date timestamp = new Date();
-			if (hasAttachment) {
-				LOGGER.info("Checking for attachment!");
-				ItemStackArgument arg = ItemStackArgumentType.getItemStackArgument(context, "attachment");
-				ItemStack stack = arg.createStack(1, false);
-				ItemStackAttachment attachment = new ItemStackAttachment(stack);
-				Message m = new Message(new LiteralText(message), author, timestamp, attachment);
-				inboxes.sendMessage(player, m);
-			} else {
-				LOGGER.info("Attachment not found!");
-				Message m = new Message(new LiteralText(message), author, timestamp, null);
-				inboxes.sendMessage(player, m);
-			}
-			return 1;
-		} catch (CommandSyntaxException e) {
-			context.getSource().sendError(new LiteralText("Only players may send mail!"));
-			return -1;
-		}
-	}
 }

@@ -46,6 +46,7 @@ dependencies {
 	//fapi-qsl networking so cca can work
 	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-api-base:1.0.0+${project.minecraft_version}-SNAPSHOT")
 	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-networking-api-v1:2.0.0+${project.minecraft_version}-SNAPSHOT")
+	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-registry-sync-v0:0.9.6+${project.minecraft_version}-SNAPSHOT")
 
 	include "org.quiltmc.qsl:block:1.0.0:${project.minecraft_version}-SNAPSHOT"
 	include "org.quiltmc.qsl:core:1.0.0:${project.minecraft_version}-SNAPSHOT"
