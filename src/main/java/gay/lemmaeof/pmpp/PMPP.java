@@ -60,7 +60,7 @@ public class PMPP implements ModInitializer {
 		CommandRegistrationCallback.EVENT.register(((dispatcher, integrated, dedicated) -> {
 			dispatcher.register(
 					CommandManager.literal("pmpp")
-							.then(CommandManager.literal("send")
+							.then(CommandManager.literal("nts")
 									.then(CommandManager.argument("contents", StringArgumentType.greedyString())
 											.executes(context -> {
 												String message = context.getArgument("contents", String.class);
@@ -87,7 +87,7 @@ public class PMPP implements ModInitializer {
 													context.getSource().sendFeedback(new LiteralText("Message sent!"), true);
 													return 1;
 												} catch (CommandSyntaxException e) {
-													context.getSource().sendError(new LiteralText("Must run as player!"));
+													context.getSource().sendError(new LiteralText("Must be run as player!"));
 													return -1;
 												}
 											})

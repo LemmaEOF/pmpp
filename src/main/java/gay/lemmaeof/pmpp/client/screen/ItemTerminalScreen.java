@@ -29,10 +29,9 @@ public class ItemTerminalScreen extends Screen {
 		for (MessageThread thread : inbox) {
 			if (thread.getMembers().size() == 1 && thread.getMembers().contains(client.player.getUuid())) {
 				this.testThread = thread;
-				break;
+				return;
 			}
 		}
-		System.out.println("TEST THREAD IS NULL! OH NO!");
 	}
 
 	@Override
@@ -105,6 +104,7 @@ public class ItemTerminalScreen extends Screen {
 				this.textRenderer.draw(matrices, authorLine, x, y, 0xFFFFFF);
 				y += 12;
 				this.textRenderer.draw(matrices, contents, x + 4, y, 0xFFFFFF);
+				y += 12;
 			}
 		}
 		this.messageField.render(matrices, mouseX, mouseY, delta);

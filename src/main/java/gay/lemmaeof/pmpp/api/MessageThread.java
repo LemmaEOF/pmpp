@@ -105,4 +105,14 @@ public class MessageThread {
 		}
 		return ret;
 	}
+
+	@Override
+	public String toString() {
+		return "MessageThread{" +
+				"threadId=" + threadId +
+				", title='" + title + '\'' +
+				", members=" + members +
+				", messages=" + messages +
+				'}';
+	}
 }

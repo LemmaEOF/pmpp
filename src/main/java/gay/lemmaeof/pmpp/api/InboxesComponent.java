@@ -3,9 +3,7 @@ package gay.lemmaeof.pmpp.api;
 import dev.onyxstudios.cca.api.v3.component.sync.AutoSyncedComponent;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -19,7 +17,11 @@ public interface InboxesComponent extends AutoSyncedComponent {
 	}
 	List<MessageThread> getInbox(UUID playerId);
 	default MessageThread createThread(String name, PlayerEntity... members) {
-		return createThread(name, (UUID[]) Arrays.stream(members).map(PlayerEntity::getUuid).toArray());
+		UUID[] uuids = new UUID[members.length];
+		for (int i = 0; i < members.length; i++) {
+			uuids[i] = members[i].getUuid();
+		}
+		return createThread(name, uuids);
 	}
 	MessageThread createThread(String name, UUID... members);
 }
