@@ -31,29 +31,36 @@ repositories {
 		name = 'Ladysnake Mods'
 		url = 'https://ladysnake.jfrog.io/artifactory/mods'
 	}
+	maven {
+		name 'Gegy'
+		url 'https://maven.gegy.dev'
+	}
 }
 
 dependencies {
-	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
 	mappings(loom.layered {
 		addLayer(quiltMappings.mappings("org.quiltmc:quilt-mappings:${minecraft_version}+build.${project.quilt_mappings}:v2"))
 	})
-//	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
+	//just implementation the whole qsl for dev, just in case we need more libs
 	modImplementation "org.quiltmc.qsl:qsl:${project.qsl_version}+${project.minecraft_version}-SNAPSHOT"
-	//fapi-qsl networking so cca can work
+	//fapi-qsl networking so cca can work + registry sync bc 1.18.2 borked registering
 	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-api-base:1.0.0+${project.minecraft_version}-SNAPSHOT")
 	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-networking-api-v1:2.0.0+${project.minecraft_version}-SNAPSHOT")
 	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-registry-sync-v0:0.9.6+${project.minecraft_version}-SNAPSHOT")
 
+	//the qsl we'll actually need at runtime
 	include "org.quiltmc.qsl:block:1.0.0:${project.minecraft_version}-SNAPSHOT"
 	include "org.quiltmc.qsl:core:1.0.0:${project.minecraft_version}-SNAPSHOT"
 	include "org.quiltmc.qsl:gui:1.0.0:${project.minecraft_version}-SNAPSHOT"
 	include "org.quiltmc.qsl:item:1.0.0:${project.minecraft_version}-SNAPSHOT"
 
-	//having both fapi networking and qsl networking causes a redirect war
+	//spruceui so scrolling text interfaces wont absolutely blow
+	modImplementation include("dev.lambdaurora:spruceui:${project.spruceui_version}")
+
+	//having both fapi networking and qsl networking causes a redirect war so yeet fapi stuff
 	modImplementation("dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cardinal_version}") {
 		exclude group: "net.fabricmc.fabric-api"
 	}
