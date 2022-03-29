@@ -1,6 +1,6 @@
 package gay.lemmaeof.pmpp.item;
 
-import gay.lemmaeof.pmpp.client.screen.ItemTerminalScreen;
+import gay.lemmaeof.pmpp.client.screen.TerminalChatScreen;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
@@ -18,7 +18,7 @@ public class TerminalItem extends Item {
 	@Override
 	public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
 		if (world.isClient) {
-			MinecraftClient.getInstance().setScreen(new ItemTerminalScreen());
+			MinecraftClient.getInstance().setScreen(new TerminalChatScreen(null));
 		}
 		return super.use(world, user, hand);
 	}

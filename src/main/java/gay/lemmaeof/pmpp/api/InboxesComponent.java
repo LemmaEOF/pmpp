@@ -16,6 +16,7 @@ public interface InboxesComponent extends AutoSyncedComponent {
 		return getInbox(player.getUuid());
 	}
 	List<MessageThread> getInbox(UUID playerId);
+	MessageThread getThread(int threadId);
 	default MessageThread createThread(String name, PlayerEntity... members) {
 		UUID[] uuids = new UUID[members.length];
 		for (int i = 0; i < members.length; i++) {

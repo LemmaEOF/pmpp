@@ -2,11 +2,10 @@ package gay.lemmaeof.pmpp.impl;
 
 import java.util.*;
 
-import com.google.common.collect.Sets;
 import dev.onyxstudios.cca.api.v3.level.LevelComponents;
 import gay.lemmaeof.pmpp.api.InboxesComponent;
 import gay.lemmaeof.pmpp.api.MessageThread;
-import gay.lemmaeof.pmpp.client.screen.ItemTerminalScreen;
+import gay.lemmaeof.pmpp.client.screen.TerminalChatScreen;
 import gay.lemmaeof.pmpp.init.PMPPComponents;
 
 import net.minecraft.client.MinecraftClient;
@@ -27,6 +26,7 @@ public class LevelInboxComponent implements InboxesComponent {
 	private static final int DEV_HASH = 2;
 	private final WorldProperties level;
 	private final Map<UUID, MutableText> cachedNames = new HashMap<>();
+	//TODO: Int2ObjectMap? CIIHBM?
 	private final List<MessageThread> allThreads = new ArrayList<>();
 	private final Map<UUID, List<MessageThread>> inboxes = new HashMap<>();
 	private MinecraftServer server;
@@ -61,6 +61,12 @@ public class LevelInboxComponent implements InboxesComponent {
 	@Override
 	public List<MessageThread> getInbox(UUID playerId) {
 		return inboxes.computeIfAbsent(playerId, (id) -> new ArrayList<>());
+	}
+
+	//TODO: this will only be safe on server once I have partial sync support
+	@Override
+	public MessageThread getThread(int threadId) {
+		return allThreads.get(threadId);
 	}
 
 	@Override
@@ -156,7 +162,7 @@ public class LevelInboxComponent implements InboxesComponent {
 	@Override
 	public void applySyncPacket(PacketByteBuf buf) {
 		InboxesComponent.super.applySyncPacket(buf);
-		if (MinecraftClient.getInstance().currentScreen instanceof ItemTerminalScreen s) {
+		if (MinecraftClient.getInstance().currentScreen instanceof TerminalChatScreen s) {
 			s.updateThread();
 		}
 	}

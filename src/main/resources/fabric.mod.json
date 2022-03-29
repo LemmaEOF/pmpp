@@ -18,7 +18,7 @@
 
   "environment": "*",
   "entrypoints": {
-    "main": [
+    "init": [
       "gay.lemmaeof.pmpp.PMPP"
     ],
     "cardinal-components-level": [

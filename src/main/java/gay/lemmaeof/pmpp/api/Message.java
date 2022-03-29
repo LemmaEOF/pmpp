@@ -21,7 +21,7 @@ public class Message {
 	@Nullable private Attachment attachment;
 
 	//TODO: config!
-	private static final SimpleDateFormat FORMAT = new SimpleDateFormat("d/M/yyyy, h:m a");
+	private static final SimpleDateFormat FORMAT = new SimpleDateFormat("M/d/yy, h:m a");
 
 	public Message(Text message, UUID author, Date timestamp, @Nullable Attachment attachment) {
 		this.message = message;
@@ -38,12 +38,20 @@ public class Message {
 		return author;
 	}
 
+	public long getRawTimestamp() {
+		return timestamp.getTime();
+	}
+
 	public String getTimestamp() {
 		return FORMAT.format(timestamp);
 	}
 
 	public boolean hasAttachment() {
 		return this.attachment != null;
+	}
+
+	public Attachment getRawAttachment() {
+		return this.attachment;
 	}
 
 	public ItemStack getAttachment() {

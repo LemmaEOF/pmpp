@@ -2,12 +2,8 @@ package gay.lemmaeof.pmpp;
 
 import java.util.Date;
 import java.util.List;
-import java.util.UUID;
-
-import net.fabricmc.api.ModInitializer;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.serialization.Lifecycle;
 import gay.lemmaeof.pmpp.api.Attachment;
@@ -16,29 +12,25 @@ import gay.lemmaeof.pmpp.api.Message;
 import gay.lemmaeof.pmpp.api.MessageThread;
 import gay.lemmaeof.pmpp.impl.ItemStackAttachment;
 import gay.lemmaeof.pmpp.init.PMPPComponents;
-import net.minecraft.command.argument.ItemStackArgument;
-
+import gay.lemmaeof.pmpp.init.PMPPNetworking;
 import gay.lemmaeof.pmpp.item.TerminalItem;
+import org.quiltmc.qsl.base.api.entrypoint.ModInitializer;
 import org.quiltmc.qsl.command.api.CommandRegistrationCallback;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import net.minecraft.command.argument.EntityArgumentType;
-import net.minecraft.command.argument.ItemStackArgumentType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
 import net.minecraft.server.command.CommandManager;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.LiteralText;
-import net.minecraft.text.MutableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.util.registry.RegistryKey;
 import net.minecraft.util.registry.SimpleRegistry;
-import net.minecraft.world.WorldProperties;
+
+import net.fabricmc.loader.api.ModContainer;
+
 
 public class PMPP implements ModInitializer {
 	public static final String MODID = "pmpp";
@@ -50,9 +42,11 @@ public class PMPP implements ModInitializer {
 	public static final ItemStackAttachment.AttachmentType STACK_ATTACHMENT = new ItemStackAttachment.AttachmentType();
 
 	@Override
-	public void onInitialize() {
+	public void onInitialize(ModContainer container) {
 
 		LOGGER.info("Hello Quilt world!");
+
+		PMPPNetworking.init();
 
 		Registry.register(Registry.ITEM, new Identifier(MODID, "test_terminal"), new TerminalItem(new Item.Settings().group(ItemGroup.MISC).maxCount(1)));
 

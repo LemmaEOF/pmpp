@@ -44,21 +44,25 @@ dependencies {
 	})
 	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	//just implementation the whole qsl for dev, just in case we need more libs
-	modImplementation "org.quiltmc.qsl:qsl:${project.qsl_version}+${project.minecraft_version}-SNAPSHOT"
-	//fapi-qsl networking so cca can work + registry sync bc 1.18.2 borked registering
+	//all the qsl libs we'll need
+	modImplementation include("org.quiltmc.qsl.command:command:${project.qsl_version}+${project.minecraft_version}-SNAPSHOT")
+	modImplementation include("org.quiltmc.qsl.core:qsl_base:${project.qsl_version}+${project.minecraft_version}-SNAPSHOT")
+	modImplementation include("org.quiltmc.qsl.core:crash_info:${project.qsl_version}+${project.minecraft_version}-SNAPSHOT")
+	modImplementation include("org.quiltmc.qsl.core:networking:${project.qsl_version}+${project.minecraft_version}-SNAPSHOT")
+	modImplementation include("org.quiltmc.qsl.core:registry:${project.qsl_version}+${project.minecraft_version}-SNAPSHOT")
+	modImplementation include("org.quiltmc.qsl.core:resource_loader:${project.qsl_version}+${project.minecraft_version}-SNAPSHOT")
+	modImplementation include("org.quiltmc.qsl.gui:tooltip:${project.qsl_version}+${project.minecraft_version}-SNAPSHOT")
+	//fapi-qsl lifecycle, networking, rendering, and resource loader so spruceui and cca can work
 	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-api-base:1.0.0+${project.minecraft_version}-SNAPSHOT")
+	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-lifecycle-events-v1:3.0.0+${project.minecraft_version}-SNAPSHOT")
 	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-networking-api-v1:2.0.0+${project.minecraft_version}-SNAPSHOT")
-	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-registry-sync-v0:0.9.6+${project.minecraft_version}-SNAPSHOT")
-
-	//the qsl we'll actually need at runtime
-	include "org.quiltmc.qsl:block:1.0.0:${project.minecraft_version}-SNAPSHOT"
-	include "org.quiltmc.qsl:core:1.0.0:${project.minecraft_version}-SNAPSHOT"
-	include "org.quiltmc.qsl:gui:1.0.0:${project.minecraft_version}-SNAPSHOT"
-	include "org.quiltmc.qsl:item:1.0.0:${project.minecraft_version}-SNAPSHOT"
+	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-rendering-v1:2.0.0+${project.minecraft_version}-SNAPSHOT")
+	modLocalRuntime include("org.quiltmc.fabric_api_qsl:fabric-resource-loader-v0:1.0.1+${project.minecraft_version}-SNAPSHOT")
 
 	//spruceui so scrolling text interfaces wont absolutely blow
-	modImplementation include("dev.lambdaurora:spruceui:${project.spruceui_version}")
+	modImplementation include("dev.lambdaurora:spruceui:${project.spruceui_version}") {
+		exclude group: "net.fabricmc.fabric-api"
+	}
 
 	//having both fapi networking and qsl networking causes a redirect war so yeet fapi stuff
 	modImplementation("dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cardinal_version}") {
